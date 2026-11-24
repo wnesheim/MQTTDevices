@@ -1,0 +1,46 @@
+name: mqttwaterheater.v1
+components:
+  - id: main
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+        config:
+          values:
+            - key: "temperature.value"
+              range: [-20, 200]
+      - id: thermostatHeatingSetpoint
+        version: 1
+        config:
+          values:
+            - key: "heatingSetpoint.value"
+              range: [30, 160]
+      - id: panelachieve63661.mqttSelect
+        version: 1
+      - id: partyvoice23922.status
+        version: 1
+      - id: partyvoice23922.refresh
+        version: 1
+    categories:
+      - name: WaterHeater
+preferences:
+  - title: "Temperature Units"
+    name: whunit
+    description: "Units the water heater reports"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        fahrenheit: "Fahrenheit"
+        celsius: "Celsius"
+      default: fahrenheit
+  - title: "Publish QoS"
+    name: qos
+    description: "Quality of Service"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        qos0: "0"
+        qos1: "1"
+        qos2: "2"
+      default: qos1

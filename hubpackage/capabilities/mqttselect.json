@@ -1,0 +1,43 @@
+{
+    "name": "MQTT Select",
+    "attributes": {
+        "selection": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": { "type": "string", "maxLength": 64 }
+                },
+                "additionalProperties": false,
+                "required": ["value"]
+            },
+            "setter": "setSelection",
+            "enumCommands": []
+        },
+        "options": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 64 }
+                    }
+                },
+                "additionalProperties": false,
+                "required": ["value"]
+            },
+            "enumCommands": []
+        }
+    },
+    "commands": {
+        "setSelection": {
+            "name": "setSelection",
+            "arguments": [
+                {
+                    "name": "value",
+                    "optional": false,
+                    "schema": { "type": "string", "maxLength": 64 }
+                }
+            ]
+        }
+    }
+}

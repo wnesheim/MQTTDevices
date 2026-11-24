@@ -29,6 +29,9 @@ local procmsg = require "procmessages"
 local sub = require "subscriptions"
 local cmd = require "cmdhandlers"
 local mqtt = require "mqtt"
+local cfg = require "cfg"
+local discovery = require "discovery"
+local waterheater = require "waterheater"
 
 
 -- Global variables
@@ -61,6 +64,7 @@ typemeta =  {
               ['Battery']      = { ['profile'] = 'mqttbattery.v1',       ['created'] = 0, ['switch'] = false },
               ['Robot']        = { ['profile'] = 'mqttrobot.v1',         ['created'] = 0, ['switch'] = false },
               ['Fan']          = { ['profile'] = 'mqttfan.v1',           ['created'] = 0, ['switch'] = true },
+              ['WaterHeater']  = { ['profile'] = 'mqttwaterheater.v1',   ['created'] = 0, ['switch'] = false },   -- discovery only
             }
 
 -- Module variables
@@ -70,7 +74,7 @@ local clearcreatemsg_timer
 local shutdown_requested = false
 
 local MASTERPROFILE = 'mqttcreator.v9'
-local MASTERLABEL = 'MQTT Device Creator V1.9'
+local MASTERLABEL = 'MQTT Devices BN'
 
 local CREATECAPID  = 'partyvoice23922.createmqttdev9'
 local CREATECAPID8  = 'partyvoice23922.createmqttdev8'
@@ -99,13 +103,32 @@ cap_numfield = capabilities["partyvoice23922.numberfield"]
 cap_unitfield = capabilities["partyvoice23922.unitfield"]
 
 cap_reset = capabilities["partyvoice23922.resetselect"]
+cap_select = capabilities["panelachieve63661.mqttSelect"]       -- runtime-populated dropdown (discovery picker, water heater mode)
 
+
+
+-- Temperature devices: show the "Set Temperature" control only when publishing is enabled
+local TEMP_PROFILE_RW = 'mqtttemp.v2'
+local TEMP_PROFILE_RO = 'mqtttemp.v2r'
+
+local function update_temp_profile(device)
+  if device.device_network_id:match('^MQTT_Temperature_') then
+    local want_rw = cmd.can_publish(device)
+    local has_rw = device:supports_capability_by_id('partyvoice23922.vtempset')
+    if want_rw ~= has_rw then
+      local profile = want_rw and TEMP_PROFILE_RW or TEMP_PROFILE_RO
+      log.info (string.format('Switching <%s> to profile %s', device.label, profile))
+      device:try_update_metadata({ profile = profile })
+    end
+  end
+end
 
 
 local function schedule_subscribe()
 
   if client then
     sub.subscribe_all()
+    discovery.subscribe()
   else
     log.warn('Broker not yet connected')
     thisDriver:call_with_delay(2, schedule_subscribe)
@@ -118,6 +141,9 @@ local function create_MQTT_client(device)
   local connect_args = {}
   connect_args.uri = device.preferences.broker
   connect_args.clean = true
+  -- Stable client ID (<= 23 chars) so a stale session on the broker is taken over
+  -- rather than colliding with a randomly generated (possibly unseeded) ID
+  connect_args.id = 'STMQTT_' .. device.id:gsub('-', ''):sub(1, 16)
   
   if device.preferences.userid ~= '' and device.preferences.password ~= '' then
     if device.preferences.userid ~= 'xxxxx' and device.preferences.password ~= 'xxxxx' then
@@ -127,16 +153,17 @@ local function create_MQTT_client(device)
   end
 
   SUBSCRIBED_TOPICS = {}
+  BROKER_TOPICS = {}
 
   -- create mqtt client
-  client = mqtt.client(connect_args)
+  local c = mqtt.client(connect_args)
 
-  client:on{
+  c:on{
     connect = function(connack)
       if connack.rc ~= 0 then
+        -- library closes the connection and run_sync returns false; supervisor will retry
         log.error ("connection to broker failed:", connack:reason_string(), connack)
         device:emit_event(cap_status.status('Failed to Connect to Broker'))
-        client = nil
         return
       end
       log.info("Connected to MQTT broker:", connack) -- successful connection
@@ -146,7 +173,10 @@ local function create_MQTT_client(device)
     end,
 
     message = function(msg)
-      assert(client:acknowledge(msg))
+      local ok, err = c:acknowledge(msg)
+      if not ok then
+        log.error ('Failed to acknowledge message:', err)
+      end
 
       --log.info("received:", msg, type(msg))
       -- example msg:  PUBLISH{payload="Hello world", topic="testmqtt/pimylifeup", dup=false, type=3, qos=0, retain=false}
@@ -157,20 +187,64 @@ local function create_MQTT_client(device)
     end,
 
     error = function(err)
+      -- Do not touch the global client here; the supervisor thread owns its lifecycle.
+      -- (Previously this could nil out a newer replacement client.)
       log.error("MQTT client error:", err)
-      client = nil
     end,
   }
 
-  return client
+  return c
 
+end
+
+
+-- Supervisor: runs the current client; on ANY exit (error, clean close, Lua error)
+-- waits and reconnects, until driver shutdown is requested.
+local function mqtt_supervisor(device)
+
+  device:set_field('client_thread', true)
+
+  while not shutdown_requested do
+
+    local c = client
+    if c then
+      local pok, ok, err = pcall(mqtt.run_sync, c)
+      if not pok then
+        log.error ('MQTT run_sync raised error:', ok)
+        err = tostring(ok)
+      end
+      if c.connection then c:close_connection('run_sync exited') end
+      log.warn ('MQTT session ended:', err or 'connection closed')
+      -- Only clear the global if it hasn't been replaced (e.g. by init_mqtt on Refresh)
+      if client == c then client = nil end
+    end
+
+    if shutdown_requested then break end
+
+    if client == nil then
+      device:emit_event(cap_status.status('Reconnecting...'))
+      device:emit_event(cap_topiclist.topiclist(' ', { visibility = { displayed = false } }))
+      client_reset_inprogress = true
+      local delay = tonumber(creator_device.preferences and creator_device.preferences.reconndelay) or 15
+      if delay < 1 then delay = 1 end
+      cosock.socket.sleep(delay)
+      if shutdown_requested then break end
+      if client == nil then
+        log.info ('Attempting to reconnect to broker...')
+        device:emit_event(cap_status.status('Connecting...'))
+        client = create_MQTT_client(device)
+      end
+    end
+  end
+
+  client_reset_inprogress = false
+  pcall(device.emit_event, device, cap_status.status('Driver shutdown'))   -- device may already be removed
+  pcall(device.set_field, device, 'client_thread', false)
 end
 
 
 function init_mqtt(device)
 
-  if client_reset_inprogress == true then; return; end
-  
   if device == nil then; device = creator_device; end       -- needed if invoked via driver:call_with_delay() method
 
   if device.preferences.broker == '192.168.1.xxx' or
@@ -198,48 +272,10 @@ function init_mqtt(device)
 
   client = create_MQTT_client(device)
 
-  if client and (device:get_field('client_thread') ~= true) then
-  
-  -- Run MQTT loop in separate thread
-
-    cosock.spawn(function()
-      device:set_field('client_thread', true)
-      
-      while true do
-        local ok, err = mqtt.run_sync(client)
-        client = nil
-        if ok == false then
-          log.warn ('MQTT run_sync returned: ', err)
-          if shutdown_requested == true then
-            device:emit_event(cap_status.status('Driver shutdown'))
-            return
-          end
-          if string.lower(err):find('connection refused', 1, 'plaintext') or (err == "closed") or 
-             string.lower(err):find('no route to host', 1, 'plaintext') then
-            device:emit_event(cap_status.status('Reconnecting...'))
-            device:emit_event(cap_topiclist.topiclist(' ', { visibility = { displayed = false } }))
-            client_reset_inprogress = true
-            -- pause, then try to create new mqtt client
-            cosock.socket.sleep(creator_device.preferences.reconndelay or 15)
-            log.info ('Attempting to reconnect to broker...')
-            client = create_MQTT_client(device)
-          else
-            break
-          end
-        else
-          log.error ('Unexpected return from MQTT client:', ok, err)
-        end
-      end
-      
-      device:set_field('client_thread', false)
-    end, 'MQTT synch mode')
-
-    -- Schedule device subscriptions
-    --thisDriver:call_with_delay(3, schedule_subscribe)
-    
-  elseif client == nil then
-    log.error ('Create MQTT Client failed')
-    thisDriver:call_with_delay(creator_device.preferences.reconndelay or 15, init_mqtt)
+  -- If the supervisor thread is already running it will pick up the new client
+  -- once the old session's run_sync returns; otherwise start it.
+  if device:get_field('client_thread') ~= true then
+    cosock.spawn(function() mqtt_supervisor(device) end, 'MQTT supervisor')
   end
 end
 
@@ -275,7 +311,13 @@ local function device_init(driver, device)
     init_mqtt(device)
 
   else
-    device:emit_event(cap_status.status('Not Subscribed'))
+    if not SUBSCRIBED_TOPICS[device.id] then
+      device:emit_event(cap_status.status('Not Subscribed'))
+    end
+    if device.device_network_id:match('^MQTT_WaterHeater_') then
+      waterheater.init(device)
+    end
+    update_temp_profile(device)
   end
   
 end
@@ -287,6 +329,13 @@ local function device_added (driver, device)
   log.info(device.id .. ": " .. device.device_network_id .. "> ADDED")
 
   if not device.device_network_id:find('Master', 1, 'plaintext') then
+
+    -- Device picked from discovery: attach its discovered configuration
+    local entry = discovery.take_pending(device.device_network_id)
+    if entry then
+      cfg.set_overlay(device, entry.cfg)
+      log.info (string.format('Applied discovered configuration to <%s>', device.label))
+    end
 
     local dtype = device.device_network_id:match('MQTT_(.+)_+')
 
@@ -353,8 +402,16 @@ local function device_added (driver, device)
       device:emit_event(capabilities.battery.battery(100))
     elseif dtype == 'Fan' then
       device:emit_event(capabilities.fanSpeed.fanSpeed(0))
+    elseif dtype == 'WaterHeater' then
+      waterheater.init(device)
       
     end
+
+    if entry then
+      update_temp_profile(device)
+      if client then sub.subscribe_device(device) end
+    end
+    discovery.schedule_update()
 
     creator_device:emit_event(cap_createdev.deviceType('Device created'))
     clearcreatemsg_timer = driver:call_with_delay(10, function()
@@ -381,11 +438,8 @@ local function device_removed(driver, device)
   log.warn(device.id .. ": " .. device.device_network_id .. "> removed")
 
   if not device.device_network_id:find('Master', 1, 'plaintext') then
-    local id, topic = sub.get_subscribed_topic(device)
-
-    if topic then
-      sub.unsubscribe(id, topic, true)
-    end
+    sub.unsubscribe_device(device.id)
+    discovery.schedule_update()       -- make it pickable again
   else
     if client then
       sub.unsubscribe_all()
@@ -449,15 +503,18 @@ local function handler_infochanged (driver, device, event, args)
     local uname_changed = false
     local pw_changed = false
 
+    -- Settings the user edits stop being overridden by discovered values
+    cfg.user_changed(device, args.old_st_store.preferences)
+
+    if device.device_network_id:find('Master', 1, 'plaintext') and
+       args.old_st_store.preferences.discprefix ~= device.preferences.discprefix then
+      log.info ('Discovery prefix changed to: ', device.preferences.discprefix)
+      discovery.reset()
+    end
+
     if args.old_st_store.preferences.subTopic ~= device.preferences.subTopic then
       log.info ('Subscribe Topic changed to: ', device.preferences.subTopic)
-      local id, topic = sub.get_subscribed_topic(device)
-      if topic then
-        sub.unsubscribe(id, topic)
-        device:emit_event(cap_status.status('Un-Subscribed'))
-      end
-      
-      sub.subscribe_topic(device)
+      sub.mqtt_subscribe(device)
       
     elseif args.old_st_store.preferences.userid ~= device.preferences.userid then
       uname_changed = true
@@ -468,6 +525,11 @@ local function handler_infochanged (driver, device, event, args)
       ip_changed = true
     end
     
+    if args.old_st_store.preferences.publish ~= device.preferences.publish or
+       args.old_st_store.preferences.pubtopic ~= device.preferences.pubtopic then
+      update_temp_profile(device)
+    end
+
     if ip_changed or uname_changed or pw_changed then
       if device.preferences.broker ~= '192.168.1.xxx' then
         init_mqtt(device)
@@ -488,7 +550,7 @@ local function discovery_handler(driver, _, should_continue)
     local MFG_NAME = 'SmartThings Community'
     local MODEL = 'MQTTCreatorV1'
     local VEND_LABEL = MASTERLABEL           --update; change for testing
-    local ID = 'MQTTDev_Masterv1'               --change for testing
+    local ID = 'MQTTDev_Masterv1_BN'             --change for testing
     local PROFILE = MASTERPROFILE           --update; change for testing
 
     -- Create master creator device
@@ -604,12 +666,18 @@ thisDriver = Driver("MQTT Devices", {
     [capabilities.robotCleanerMovement.ID] = {
       [capabilities.robotCleanerMovement.commands.setRobotCleanerMovement.NAME] = cmd.handle_robot,
     },
+    [cap_select.ID] = {
+      [cap_select.commands.setSelection.NAME] = cmd.handle_select,
+    },
+    [capabilities.thermostatHeatingSetpoint.ID] = {
+      [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = cmd.handle_wh_setpoint,
+    },
     [capabilities.fanSpeed.ID] = {
       [capabilities.fanSpeed.commands.setFanSpeed.NAME] = cmd.handle_fanspeed,
     },
   }
 })
 
-log.info ('MQTT Device Driver V1.8 Started')
+log.info ('MQTT Devices BN driver started')
 
 thisDriver:run()

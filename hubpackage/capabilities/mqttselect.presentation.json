@@ -1,0 +1,275 @@
+{
+    "dashboard": {
+        "states": [],
+        "actions": []
+    },
+    "detailView": [
+        {
+            "label": "Mode",
+            "displayType": "list",
+            "list": {
+                "command": {
+                    "name": "setSelection",
+                    "argumentType": "string",
+                    "supportedValues": "options.value",
+                    "alternatives": [
+                        {
+                            "key": "Efficiency",
+                            "value": "Efficiency",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Hybrid",
+                            "value": "Hybrid",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Vacation",
+                            "value": "Vacation",
+                            "type": "active"
+                        },
+                        {
+                            "key": "eco",
+                            "value": "Eco",
+                            "type": "active"
+                        },
+                        {
+                            "key": "electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "gas",
+                            "value": "Gas",
+                            "type": "active"
+                        },
+                        {
+                            "key": "heat_pump",
+                            "value": "Heat pump",
+                            "type": "active"
+                        },
+                        {
+                            "key": "high_demand",
+                            "value": "High demand",
+                            "type": "active"
+                        },
+                        {
+                            "key": "performance",
+                            "value": "Performance",
+                            "type": "active"
+                        },
+                        {
+                            "key": "off",
+                            "value": "Off",
+                            "type": "active"
+                        }
+                    ]
+                },
+                "state": {
+                    "value": "selection.value",
+                    "valueType": "string",
+                    "alternatives": [
+                        {
+                            "key": "Efficiency",
+                            "value": "Efficiency",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Hybrid",
+                            "value": "Hybrid",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Vacation",
+                            "value": "Vacation",
+                            "type": "active"
+                        },
+                        {
+                            "key": "eco",
+                            "value": "Eco",
+                            "type": "active"
+                        },
+                        {
+                            "key": "electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "gas",
+                            "value": "Gas",
+                            "type": "active"
+                        },
+                        {
+                            "key": "heat_pump",
+                            "value": "Heat pump",
+                            "type": "active"
+                        },
+                        {
+                            "key": "high_demand",
+                            "value": "High demand",
+                            "type": "active"
+                        },
+                        {
+                            "key": "performance",
+                            "value": "Performance",
+                            "type": "active"
+                        },
+                        {
+                            "key": "off",
+                            "value": "Off",
+                            "type": "active"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "automation": {
+        "conditions": [
+            {
+                "label": "Mode",
+                "displayType": "list",
+                "list": {
+                    "value": "selection.value",
+                    "valueType": "string",
+                    "supportedValues": "options.value",
+                    "alternatives": [
+                        {
+                            "key": "Efficiency",
+                            "value": "Efficiency",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Hybrid",
+                            "value": "Hybrid",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Vacation",
+                            "value": "Vacation",
+                            "type": "active"
+                        },
+                        {
+                            "key": "eco",
+                            "value": "Eco",
+                            "type": "active"
+                        },
+                        {
+                            "key": "electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "gas",
+                            "value": "Gas",
+                            "type": "active"
+                        },
+                        {
+                            "key": "heat_pump",
+                            "value": "Heat pump",
+                            "type": "active"
+                        },
+                        {
+                            "key": "high_demand",
+                            "value": "High demand",
+                            "type": "active"
+                        },
+                        {
+                            "key": "performance",
+                            "value": "Performance",
+                            "type": "active"
+                        },
+                        {
+                            "key": "off",
+                            "value": "Off",
+                            "type": "active"
+                        }
+                    ]
+                }
+            }
+        ],
+        "actions": [
+            {
+                "label": "Mode",
+                "displayType": "list",
+                "list": {
+                    "command": "setSelection",
+                    "argumentType": "string",
+                    "supportedValues": "options.value",
+                    "alternatives": [
+                        {
+                            "key": "Efficiency",
+                            "value": "Efficiency",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Hybrid",
+                            "value": "Hybrid",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "Vacation",
+                            "value": "Vacation",
+                            "type": "active"
+                        },
+                        {
+                            "key": "eco",
+                            "value": "Eco",
+                            "type": "active"
+                        },
+                        {
+                            "key": "electric",
+                            "value": "Electric",
+                            "type": "active"
+                        },
+                        {
+                            "key": "gas",
+                            "value": "Gas",
+                            "type": "active"
+                        },
+                        {
+                            "key": "heat_pump",
+                            "value": "Heat pump",
+                            "type": "active"
+                        },
+                        {
+                            "key": "high_demand",
+                            "value": "High demand",
+                            "type": "active"
+                        },
+                        {
+                            "key": "performance",
+                            "value": "Performance",
+                            "type": "active"
+                        },
+                        {
+                            "key": "off",
+                            "value": "Off",
+                            "type": "active"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

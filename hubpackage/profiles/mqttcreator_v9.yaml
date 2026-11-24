@@ -12,6 +12,10 @@ components:
         version: 1
       - id: partyvoice23922.mqttpublish
         version: 1
+      - id: partyvoice23922.mqtttext2
+        version: 1
+      - id: partyvoice23922.numberfield
+        version: 1
     categories:
       - name: Others
 preferences:
@@ -54,3 +58,11 @@ preferences:
       minimum: 1
       maximum: 600
       default: 15
+  - title: "Discovery Prefix"
+    name: discprefix
+    description: "HA discovery prefix (none = off)"
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      default: "homeassistant"

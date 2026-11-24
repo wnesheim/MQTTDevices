@@ -751,7 +751,9 @@ function client_mt:open_connection()
 	
 	self.keepalive_timer = thisDriver:call_on_schedule(self.args.keep_alive, 
 			function()
-				self:send_pingreq()
+				if self.connection then
+					self:send_pingreq()
+				end
 			end,
 			'Keep-alive timer')
 		
@@ -763,6 +765,15 @@ function client_mt:open_connection()
 	end
 
 	self:_apply_network_timeout()
+
+	-- Keep-alive watchdog *****
+	-- In run_sync mode the socket would otherwise block forever on a half-open
+	-- connection. PINGREQ goes out every keep_alive seconds, so a healthy link is never
+	-- silent for 1.5x keep_alive (the same grace period the broker applies). A timeout
+	-- here means the connection is dead; _io_iteration closes it and run_sync returns.
+	if not self.ioloop then
+		connector.settimeout(conn, self.args.keep_alive * 1.5)
+	end
 
 	return true
 end
