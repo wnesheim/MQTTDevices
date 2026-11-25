@@ -1,0 +1,19 @@
+{
+    "dashboard": {
+        "states": [],
+        "actions": []
+    },
+    "detailView": [
+        {
+            "label": "Create",
+            "displayType": "pushButton",
+            "pushButton": {
+                "command": "push"
+            }
+        }
+    ],
+    "automation": {
+        "conditions": [],
+        "actions": []
+    }
+}

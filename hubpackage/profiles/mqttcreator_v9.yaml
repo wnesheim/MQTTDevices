@@ -16,6 +16,8 @@ components:
         version: 1
       - id: partyvoice23922.numberfield
         version: 1
+      - id: panelachieve63661.createDevice
+        version: 1
     categories:
       - name: Others
 preferences:

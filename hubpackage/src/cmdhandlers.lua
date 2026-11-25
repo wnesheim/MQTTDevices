@@ -289,6 +289,12 @@ local function handle_volume(driver, device, command)
 end
 
 
+-- Creator "Create" button: create the discovered device currently shown
+local function handle_create(driver, device, command)
+  discovery.create_selected(driver)
+end
+
+
 -- MQTT Select capability: Water Heater operating mode
 local function handle_select(driver, device, command)
 
@@ -436,10 +442,10 @@ end
 
 local function handle_setnumeric(driver, device, command)
 
-  -- Creator device: number entered = discovered device to create
+  -- Creator device: number entered = browse discovered devices
   if device.device_network_id:find('Master', 1, 'plaintext') then
     if command.command == 'setNumber' then
-      discovery.create_selected(driver, command.args.numberval)
+      discovery.select(command.args.numberval)
     end
     return
   end
@@ -562,6 +568,7 @@ return  {
           handle_createdevice = handle_createdevice,
           can_publish = can_publish,
           handle_select = handle_select,
+          handle_create = handle_create,
           handle_wh_setpoint = handle_wh_setpoint,
           handle_switch = handle_switch,
           handle_button = handle_button,

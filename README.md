@@ -39,12 +39,11 @@ This 'master' device is used to create the desired device types (e.g. switch, bu
 The MQTT Device Creator will also display a list of the MQTT topics that are currently subscribed to across all created devices.
 
 ### Creating devices from Home Assistant discovery
-Many MQTT devices and bridges (Zigbee2MQTT, Tasmota, ESPHome, energysmartbridge, and others) publish retained *discovery* messages describing their topics and payloads. The creator device subscribes to these and shows a numbered list of the devices it found and can create, e.g.:
+Many MQTT devices and bridges (Zigbee2MQTT, Tasmota, ESPHome, energysmartbridge, and others) publish retained *discovery* messages describing their topics and payloads. The creator device subscribes to these and lets you browse the devices it found and can create. The text tile shows a count, e.g. *20 discovered - enter 1-20 to browse*. Enter a number in the creator's number field to show that entry:
 ```
-15. Switch: SRC 32 Recirculation Pump
-20. Water Heater: Hot Water Heater C47F5101C98D
+15 of 20: Switch: SRC 32 Recirculation Pump
 ```
-Enter a number in the creator's number field to create that device. It is created with its subscribe topic, publish topic, payload values, JSON key, and units already configured, and drops off the list. Deleting the device returns it to the list.
+Press the creator's **Create** button to create the entry shown. It is created with its subscribe topic, publish topic, payload values, JSON key, and units already configured, and drops off the list. Deleting the device returns it to the list.
 
 Supported discovery components: `switch`, `binary_sensor` (presence/connectivity, contact, motion, moisture), `sensor` (temperature, humidity, CO2, battery, other numeric values with their unit, text), and `water_heater`. Value templates are supported only in the simple `{{ value_json.key }}` form.
 

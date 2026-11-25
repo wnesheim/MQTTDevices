@@ -103,7 +103,8 @@ cap_numfield = capabilities["partyvoice23922.numberfield"]
 cap_unitfield = capabilities["partyvoice23922.unitfield"]
 
 cap_reset = capabilities["partyvoice23922.resetselect"]
-cap_select = capabilities["panelachieve63661.mqttSelect"]       -- runtime-populated dropdown (discovery picker, water heater mode)
+cap_select = capabilities["panelachieve63661.mqttSelect"]         -- water heater mode list
+cap_createbtn = capabilities["panelachieve63661.createDevice"]   -- creator: create the discovered device shown
 
 
 
@@ -673,6 +674,9 @@ thisDriver = Driver("MQTT Devices", {
     },
     [capabilities.robotCleanerMovement.ID] = {
       [capabilities.robotCleanerMovement.commands.setRobotCleanerMovement.NAME] = cmd.handle_robot,
+    },
+    [cap_createbtn.ID] = {
+      [cap_createbtn.commands.push.NAME] = cmd.handle_create,
     },
     [cap_select.ID] = {
       [cap_select.commands.setSelection.NAME] = cmd.handle_select,

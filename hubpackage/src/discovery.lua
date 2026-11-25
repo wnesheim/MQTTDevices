@@ -3,8 +3,10 @@
 
   Subscribes to <prefix>/# (default prefix "homeassistant"), keeps every retained
   .../config message, maps the ones it understands to a driver device type, and
-  offers them on the creator device as a numbered text list; entering a number in
-  the creator's number field creates that device. (SmartThings list presentations
+  lets the user browse them on the creator device: the number field selects an
+  entry, the text tile shows it ("3 of 16: Switch: ..."), and the Create button
+  (custom createDevice capability) creates it. The iPhone app only shows one line of a text tile, so
+  entries are shown one at a time. (SmartThings list presentations
   can only filter a fixed set of alternatives, so a runtime dropdown isn't possible.) Picking an entry creates the
   device with its discovered configuration stored as an overlay (see cfg.lua).
 
@@ -20,7 +22,8 @@ local sub = require "subscriptions"
 local MAX_LABEL = 60
 
 local entries = {}          -- key -> entry { key, name, dtype, cfg, topic }
-local number_to_key = {}    -- number shown in the list -> entry key
+local number_to_key = {}    -- browse number -> entry key
+local selected_key = nil    -- entry currently shown on the creator
 local pending = {}          -- device_network_id -> entry, until device_added runs
 local update_timer = nil
 local subscribed_filter = nil
@@ -250,6 +253,33 @@ local function dni_for(entry)
 end
 
 
+-- Show the browse state on the creator: the selected entry, or a prompt
+local function show_selection()
+
+  if not creator_device then return end
+  local count = #number_to_key
+  local text, num = nil, 0
+
+  if count == 0 then
+    text = 'No discovered devices'
+  else
+    for i, key in ipairs(number_to_key) do
+      if key == selected_key then
+        text = string.format('%d of %d: %s', i, count, entries[key].label)
+        num = i
+        break
+      end
+    end
+    if not text then
+      text = string.format('%d discovered - enter 1-%d to browse', count, count)
+    end
+  end
+
+  creator_device:emit_event(cap_text.text(text))
+  creator_device:emit_event(cap_numfield.numberval(num))
+end
+
+
 local function update_picker()
 
   update_timer = nil
@@ -270,16 +300,12 @@ local function update_picker()
   table.sort(sorted, function(a, b) return a.label < b.label end)
 
   number_to_key = {}
-  local lines = {}
   for i, e in ipairs(sorted) do
     number_to_key[i] = e.key
-    table.insert(lines, string.format('%d. %s', i, e.label))
   end
 
   log.info (string.format('Discovery: %d entries available to create', #sorted))
-  local text = (#lines > 0) and table.concat(lines, '\n') or 'No discovered devices'
-  creator_device:emit_event(cap_text.text(text))
-  creator_device:emit_event(cap_numfield.numberval(0))
+  show_selection()          -- keeps the current selection if it is still in the list
 end
 
 
@@ -359,17 +385,22 @@ local function reset()
 end
 
 
--- Creator device number entry: create the device with that number in the list
-local function create_selected(driver, number)
+-- Creator number field: select (browse) an entry
+local function select_entry(number)
 
   number = math.tointeger(tonumber(number))
-  if not number or number <= 0 then return end
+  selected_key = number and number_to_key[number] or nil
+  show_selection()
+end
 
-  local key = number_to_key[number]
-  local e = key and entries[key]
+
+-- Creator Create button: create the selected entry
+local function create_selected(driver)
+
+  local e = selected_key and entries[selected_key]
   if not e then
-    log.warn ('Discovery: no entry number ' .. tostring(number))
-    creator_device:emit_event(cap_numfield.numberval(0))
+    log.info ('Discovery: Create pressed with nothing selected')
+    show_selection()
     return
   end
 
@@ -384,7 +415,8 @@ local function create_selected(driver, number)
   log.info (string.format('Discovery: creating <%s> as %s (%s)', e.name, e.dtype, dni))
 
   creator_device:emit_event(cap_createdev.deviceType('Creating device...'))
-  creator_device:emit_event(cap_numfield.numberval(0))
+  selected_key = nil
+  show_selection()
 
   local ok = driver:try_create_device({
     type = "LAN",
@@ -416,6 +448,7 @@ return {
   subscribe = subscribe,
   reset = reset,
   schedule_update = schedule_update,
+  select = select_entry,
   create_selected = create_selected,
   take_pending = take_pending,
 }
