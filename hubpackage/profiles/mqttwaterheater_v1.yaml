@@ -33,6 +33,24 @@ preferences:
         fahrenheit: "Fahrenheit"
         celsius: "Celsius"
       default: fahrenheit
+  - title: "Setpoint Minimum"
+    name: spmin
+    description: "Lowest settable temperature"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 200
+      default: 100
+  - title: "Setpoint Maximum"
+    name: spmax
+    description: "Highest settable temperature"
+    required: true
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 200
+      default: 140
   - title: "Publish QoS"
     name: qos
     description: "Quality of Service"

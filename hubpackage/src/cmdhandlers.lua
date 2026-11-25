@@ -322,6 +322,11 @@ local function handle_wh_setpoint(driver, device, command)
     return
   end
   local value = command.args.setpoint
+  local lo, hi = waterheater.setpoint_range(device)
+  if value < lo or value > hi then
+    log.warn (string.format('<%s>: setpoint %s outside %s-%s; clamping', device.label, tostring(value), lo, hi))
+    value = math.max(lo, math.min(hi, value))
+  end
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = value, unit = waterheater.unit(device) }))
   publish_message(device, waterheater.format_number(value), topic)
 end

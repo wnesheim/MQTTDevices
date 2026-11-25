@@ -26,13 +26,42 @@ local function format_number(n)
 end
 
 
--- Publish the supported mode list (from discovery) to the device
+-- Settable setpoint range: Setpoint Minimum/Maximum settings (or discovered min_temp/max_temp)
+local function setpoint_range(device)
+
+  local p = cfg.prefs(device)
+  local lo, hi = tonumber(p.spmin), tonumber(p.spmax)
+  if not lo or not hi or lo >= hi then
+    if unit(device) == 'C' then lo, hi = 38, 60 else lo, hi = 100, 140 end
+  end
+  return lo, hi
+end
+
+
+-- Publish the supported mode list (from discovery) and the slider ranges.
+-- Without the range attributes the app uses the capability's schema limits
+-- (-460 to 10000 F).
 local function init(device)
 
-  local modes = cfg.prefs(device).modes
+  local hidden = { visibility = { displayed = false } }
+  local p = cfg.prefs(device)
+
+  local modes = p.modes
   if type(modes) == 'table' and #modes > 0 then
-    local hidden = { visibility = { displayed = false } }
     device:emit_event(cap_select.options(modes, hidden))
+  end
+
+  local u = unit(device)
+  local hsp = capabilities.thermostatHeatingSetpoint
+  if hsp.heatingSetpointRange then
+    local lo, hi = setpoint_range(device)
+    device:emit_event(hsp.heatingSetpointRange({ value = { minimum = lo, maximum = hi }, unit = u }, hidden))
+  end
+  local tm = capabilities.temperatureMeasurement
+  if tm.temperatureRange then
+    local lo, hi = 32, 180
+    if u == 'C' then lo, hi = 0, 82 end
+    device:emit_event(tm.temperatureRange({ value = { minimum = lo, maximum = hi }, unit = u }, hidden))
   end
 end
 
@@ -67,6 +96,7 @@ end
 
 return {
   init = init,
+  setpoint_range = setpoint_range,
   process = process,
   unit = unit,
   format_number = format_number,

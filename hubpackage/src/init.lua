@@ -506,6 +506,14 @@ local function handler_infochanged (driver, device, event, args)
     -- Settings the user edits stop being overridden by discovered values
     cfg.user_changed(device, args.old_st_store.preferences)
 
+    if device.device_network_id:match('^MQTT_WaterHeater_') then
+      local o = args.old_st_store.preferences
+      if o.whunit ~= device.preferences.whunit or o.spmin ~= device.preferences.spmin or
+         o.spmax ~= device.preferences.spmax then
+        waterheater.init(device)          -- re-publish slider ranges
+      end
+    end
+
     if device.device_network_id:find('Master', 1, 'plaintext') and
        args.old_st_store.preferences.discprefix ~= device.preferences.discprefix then
       log.info ('Discovery prefix changed to: ', device.preferences.discprefix)

@@ -156,6 +156,8 @@ local function map_config(component, c)
     o.current_temperature_topic = c.current_temperature_topic
     if c.temperature_unit == 'C' then o.whunit = 'celsius'
     elseif c.temperature_unit == 'F' then o.whunit = 'fahrenheit' end
+    o.spmin = tonumber(c.min_temp)          -- optional in HA water_heater discovery
+    o.spmax = tonumber(c.max_temp)
 
     -- Show and send the device's own mode names: the state template maps
     -- native -> HA name, so invert it to translate HA's "modes" list back
