@@ -32,41 +32,6 @@
                             "key": "Vacation",
                             "value": "Vacation",
                             "type": "active"
-                        },
-                        {
-                            "key": "eco",
-                            "value": "Eco",
-                            "type": "active"
-                        },
-                        {
-                            "key": "electric",
-                            "value": "Electric",
-                            "type": "active"
-                        },
-                        {
-                            "key": "gas",
-                            "value": "Gas",
-                            "type": "active"
-                        },
-                        {
-                            "key": "heat_pump",
-                            "value": "Heat pump",
-                            "type": "active"
-                        },
-                        {
-                            "key": "high_demand",
-                            "value": "High demand",
-                            "type": "active"
-                        },
-                        {
-                            "key": "performance",
-                            "value": "Performance",
-                            "type": "active"
-                        },
-                        {
-                            "key": "off",
-                            "value": "Off",
-                            "type": "active"
                         }
                     ]
                 },
@@ -92,41 +57,6 @@
                         {
                             "key": "Vacation",
                             "value": "Vacation",
-                            "type": "active"
-                        },
-                        {
-                            "key": "eco",
-                            "value": "Eco",
-                            "type": "active"
-                        },
-                        {
-                            "key": "electric",
-                            "value": "Electric",
-                            "type": "active"
-                        },
-                        {
-                            "key": "gas",
-                            "value": "Gas",
-                            "type": "active"
-                        },
-                        {
-                            "key": "heat_pump",
-                            "value": "Heat pump",
-                            "type": "active"
-                        },
-                        {
-                            "key": "high_demand",
-                            "value": "High demand",
-                            "type": "active"
-                        },
-                        {
-                            "key": "performance",
-                            "value": "Performance",
-                            "type": "active"
-                        },
-                        {
-                            "key": "off",
-                            "value": "Off",
                             "type": "active"
                         }
                     ]
@@ -163,41 +93,6 @@
                             "key": "Vacation",
                             "value": "Vacation",
                             "type": "active"
-                        },
-                        {
-                            "key": "eco",
-                            "value": "Eco",
-                            "type": "active"
-                        },
-                        {
-                            "key": "electric",
-                            "value": "Electric",
-                            "type": "active"
-                        },
-                        {
-                            "key": "gas",
-                            "value": "Gas",
-                            "type": "active"
-                        },
-                        {
-                            "key": "heat_pump",
-                            "value": "Heat pump",
-                            "type": "active"
-                        },
-                        {
-                            "key": "high_demand",
-                            "value": "High demand",
-                            "type": "active"
-                        },
-                        {
-                            "key": "performance",
-                            "value": "Performance",
-                            "type": "active"
-                        },
-                        {
-                            "key": "off",
-                            "value": "Off",
-                            "type": "active"
                         }
                     ]
                 }
@@ -230,41 +125,6 @@
                         {
                             "key": "Vacation",
                             "value": "Vacation",
-                            "type": "active"
-                        },
-                        {
-                            "key": "eco",
-                            "value": "Eco",
-                            "type": "active"
-                        },
-                        {
-                            "key": "electric",
-                            "value": "Electric",
-                            "type": "active"
-                        },
-                        {
-                            "key": "gas",
-                            "value": "Gas",
-                            "type": "active"
-                        },
-                        {
-                            "key": "heat_pump",
-                            "value": "Heat pump",
-                            "type": "active"
-                        },
-                        {
-                            "key": "high_demand",
-                            "value": "High demand",
-                            "type": "active"
-                        },
-                        {
-                            "key": "performance",
-                            "value": "Performance",
-                            "type": "active"
-                        },
-                        {
-                            "key": "off",
-                            "value": "Off",
                             "type": "active"
                         }
                     ]

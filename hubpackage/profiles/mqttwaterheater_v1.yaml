@@ -25,7 +25,7 @@ components:
 preferences:
   - title: "Temperature Units"
     name: whunit
-    description: "Units the water heater reports"
+    description: "Units reported by the water heater"
     required: true
     preferenceType: enumeration
     definition:
